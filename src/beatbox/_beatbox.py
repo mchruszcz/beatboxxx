@@ -8,6 +8,7 @@ __copyright__ = "(C) 2006 Simon Fell. GNU GPL 2."
 import httplib
 import logging
 import socket
+import sys
 from urlparse import urlparse
 from StringIO import StringIO
 import gzip
@@ -38,10 +39,12 @@ forceHttp=False     # force all connections to be HTTP, for debugging
 
 logger = logging.getLogger('beatbox')
 
-def makeConnection(scheme, host):
+
+def makeConnection(scheme, host, timeout=600):
+    kwargs = {} if sys.version_info < (2, 6, 0) else {'timeout': timeout}
     if forceHttp or scheme.upper() == 'HTTP':
-        return httplib.HTTPConnection(host)
-    return httplib.HTTPSConnection(host)
+        return httplib.HTTPConnection(host, **kwargs)
+    return httplib.HTTPSConnection(host, **kwargs)
 
 
 # the main sforce client proxy class
