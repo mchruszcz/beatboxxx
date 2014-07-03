@@ -49,10 +49,11 @@ def makeConnection(scheme, host, timeout=600):
 
 # the main sforce client proxy class
 class Client:
-    def __init__(self, serverUrl=None):
+    def __init__(self, serverUrl=None, timeout=600):
         self.batchSize = 500
         self.serverUrl = serverUrl or DEFAULT_SERVER_URL
         self.__conn = None
+        self.timeout = timeout
 
     def __del__(self):
         if callable(getattr(self.__conn, 'close', None)):
@@ -69,7 +70,7 @@ class Client:
         self.sessionId = sessionId
         self.__serverUrl = serverUrl
         (scheme, host, path, params, query, frag) = urlparse(self.__serverUrl)
-        self.__conn = makeConnection(scheme, host)
+        self.__conn = makeConnection(scheme, host, self.timeout)
 
     # set the batchSize property on the Client instance to change the batchsize for query/queryMore
     def query(self, soql):
@@ -256,10 +257,11 @@ class SoapWriter(XmlWriter):
 
 # processing for a single soap request / response
 class SoapEnvelope:
-    def __init__(self, serverUrl, operationName, clientId="BeatBox/" + __version__):
+    def __init__(self, serverUrl, operationName, clientId="BeatBox/" + __version__, timeout=600):
         self.serverUrl = serverUrl
         self.operationName = operationName
         self.clientId = clientId
+        self.timeout = timeout
 
     def writeHeaders(self, writer):
         pass
@@ -309,7 +311,7 @@ class SoapEnvelope:
         while not response and attempt <= max_attempts:
             try:
                 if conn == None:
-                    conn = makeConnection(scheme, host)
+                    conn = makeConnection(scheme, host, self.timeout)
                     close = True
                 conn.request("POST", path, self.makeEnvelope(), headers)
                 response = conn.getresponse()
